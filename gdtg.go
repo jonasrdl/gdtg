@@ -35,29 +35,39 @@ gdtg search all`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		usingOS := runtime.GOOS
-
-		if usingOS == "windows" || usingOS == "darwin" {
-			fmt.Println("Windows /macOS currently not supported")
-		}
-
 		home, err := os.UserHomeDir()
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		configFolder := home + "/.config/"
-		paths := map[string]string{
-			"Discord":        configFolder + "discord",
-			"Discord Canary": configFolder + "discordcanary",
-			"Google Chrome":  configFolder + "google-chrome",
-			"Brave":          configFolder + "BraveSoftware/Brave-Browser",
-			"Brave Nightly":  configFolder + "BraveSoftware/Brave-Browser-Nightly",
+		var paths map[string]string
+
+		if usingOS == "linux" {
+			configFolder := home + "/.config/"
+			paths = map[string]string{
+				"Discord":        configFolder + "discord",
+				"Discord Canary": configFolder + "discordcanary",
+				"Google Chrome":  configFolder + "google-chrome",
+				"Brave":          configFolder + "BraveSoftware/Brave-Browser",
+				"Brave Nightly":  configFolder + "BraveSoftware/Brave-Browser-Nightly",
+			}
+		} else if usingOS == "darwin" {
+			configFolder := home + "/Library/Application Support/"
+			paths = map[string]string{
+				"Discord":        configFolder + "discord",
+				"Discord Canary": configFolder + "discordcanary",
+				"Google Chrome":  configFolder + "Google/Chrome",
+				"Brave":          configFolder + "BraveSoftware/Brave-Browser",
+				"Brave Nightly":  configFolder + "BraveSoftware/Brave-Browser-Nightly",
+			}
+		} else {
+			fmt.Printf("Unsupported OS: %s\n", usingOS)
+			return
 		}
 
 		platform := strings.Join(args, " ")
 
 		if _, err := os.Stat(platform); err == nil {
-			// If platform is an existing directory, treat it as a custom path
 			tokens, err := getTokens(map[string]string{"Custom": platform})
 			if err != nil {
 				fmt.Println(err)
@@ -119,6 +129,7 @@ func getTokens(paths map[string]string) (map[string][]string, error) {
 	fmt.Println("Searching tokens...")
 
 	for key, path := range paths {
+		//TODO find better solution for this
 		if strings.Contains(key, "Google Chrome") || strings.Contains(key, "Brave") {
 			// Handle browser profiles
 			profiles, err := os.ReadDir(path)
@@ -134,7 +145,7 @@ func getTokens(paths map[string]string) (map[string][]string, error) {
 				profilePath := filepath.Join(path, profile.Name(), "Local Storage", "leveldb")
 				tokensForProfile, err := searchTokensInPath(profilePath)
 				if err != nil {
-					continue // If we can't read a profile directory, skip it
+					continue
 				}
 				tokens[key+" - "+profile.Name()] = tokensForProfile
 			}
