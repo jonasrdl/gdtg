@@ -1,7 +1,6 @@
 # Go Discord Token Grabber
 
-<img alt="Code size" src="https://img.shields.io/github/languages/code-size/jonasrdl/gdtg?style=flat-square" >   
-<img alt="Open Github issues" src="https://img.shields.io/github/issues/jonasrdl/gdtg?style=flat-square" >   
+<img alt="Code size" src="https://img.shields.io/github/languages/code-size/jonasrdl/gdtg?style=flat-square" > <img alt="Open Github issues" src="https://img.shields.io/github/issues/jonasrdl/gdtg?style=flat-square" >   
 
 ## Notice
 **This project is made for educational purposes only.**
