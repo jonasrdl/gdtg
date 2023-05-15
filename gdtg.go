@@ -56,7 +56,16 @@ gdtg search all`,
 
 		platform := strings.Join(args, " ")
 
-		if platform == "all" {
+		if _, err := os.Stat(platform); err == nil {
+			// If platform is an existing directory, treat it as a custom path
+			tokens, err := getTokens(map[string]string{"Custom": platform})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			fmt.Printf("%s: %v\n", "Custom", tokens["Custom"])
+		} else if platform == "all" {
 			tokens, err := getTokens(paths)
 			if err != nil {
 				fmt.Println(err)
