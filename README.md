@@ -12,3 +12,11 @@
 `go build gdtg.go`   
 
 `./gdtg`
+
+Available options to search:
+
+`gdtg search all` Search in every location (Discord, Browsers, ...)
+
+`gdtg search Discord` Search for exact string, for example "Discord"
+
+`gdtg search /home/user/.config/discord` Search for custom path
