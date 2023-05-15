@@ -54,7 +54,9 @@ gdtg search all`,
 			"Brave Nightly":  configFolder + "BraveSoftware/Brave-Browser-Nightly",
 		}
 
-		if args[0] == "all" {
+		platform := strings.Join(args, " ")
+
+		if platform == "all" {
 			tokens, err := getTokens(paths)
 			if err != nil {
 				fmt.Println(err)
@@ -67,19 +69,19 @@ gdtg search all`,
 				fmt.Println("----------------------------------------------------")
 			}
 		} else {
-			path, exists := paths[args[0]]
+			path, exists := paths[platform]
 			if !exists {
-				fmt.Printf("No such key: %s\n", args[0])
+				fmt.Printf("No such platform: %s\n", platform)
 				return
 			}
 
-			tokens, err := getTokens(map[string]string{args[0]: path})
+			tokens, err := getTokens(map[string]string{platform: path})
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			fmt.Printf("%s: %v\n", args[0], tokens[args[0]])
+			fmt.Printf("%s: %v\n", platform, tokens[platform])
 		}
 	},
 }
